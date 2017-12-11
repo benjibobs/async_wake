@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		53FD5FAA1FDF34A600218EE6 /* iosbinpack64 in Resources */ = {isa = PBXBuildFile; fileRef = 53FD5FA91FDF34A600218EE6 /* iosbinpack64 */; };
 		B003EB351FC583CB00C58441 /* kmem.c in Sources */ = {isa = PBXBuildFile; fileRef = B003EB331FC583CA00C58441 /* kmem.c */; };
 		B003EB381FC5863800C58441 /* find_port.c in Sources */ = {isa = PBXBuildFile; fileRef = B003EB361FC5863800C58441 /* find_port.c */; };
 		B003EB3B1FC58F4900C58441 /* kdbg.c in Sources */ = {isa = PBXBuildFile; fileRef = B003EB391FC58F4900C58441 /* kdbg.c */; };
@@ -18,13 +19,13 @@
 		B07A02491FB09B6F0018ACE5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B07A02471FB09B6F0018ACE5 /* LaunchScreen.storyboard */; };
 		B07A024C1FB09B6F0018ACE5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B07A024B1FB09B6F0018ACE5 /* main.m */; };
 		B07A02541FB09C3D0018ACE5 /* async_wake.c in Sources */ = {isa = PBXBuildFile; fileRef = B07A02521FB09C3D0018ACE5 /* async_wake.c */; };
-		B0D79D621FDED41000B4F233 /* README in Resources */ = {isa = PBXBuildFile; fileRef = B0D79D611FDED41000B4F233 /* README */; };
 		B0EF11141FCC6F9C00C1D14E /* kcall.c in Sources */ = {isa = PBXBuildFile; fileRef = B0EF11121FCC6F9C00C1D14E /* kcall.c */; };
 		B0EF11171FCC784B00C1D14E /* symbols.c in Sources */ = {isa = PBXBuildFile; fileRef = B0EF11151FCC784B00C1D14E /* symbols.c */; };
 		B0F5AA3F1FDE87E90073FD88 /* early_kalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = B0F5AA3D1FDE87E80073FD88 /* early_kalloc.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		53FD5FA91FDF34A600218EE6 /* iosbinpack64 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = iosbinpack64; sourceTree = "<group>"; };
 		B003EB331FC583CA00C58441 /* kmem.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = kmem.c; sourceTree = "<group>"; };
 		B003EB341FC583CA00C58441 /* kmem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmem.h; sourceTree = "<group>"; };
 		B003EB361FC5863800C58441 /* find_port.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = find_port.c; sourceTree = "<group>"; };
@@ -46,7 +47,6 @@
 		B07A024B1FB09B6F0018ACE5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		B07A02521FB09C3D0018ACE5 /* async_wake.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = async_wake.c; sourceTree = "<group>"; };
 		B07A02531FB09C3D0018ACE5 /* async_wake.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async_wake.h; sourceTree = "<group>"; };
-		B0D79D611FDED41000B4F233 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		B0EF11121FCC6F9C00C1D14E /* kcall.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = kcall.c; sourceTree = "<group>"; };
 		B0EF11131FCC6F9C00C1D14E /* kcall.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kcall.h; sourceTree = "<group>"; };
 		B0EF11151FCC784B00C1D14E /* symbols.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = symbols.c; sourceTree = "<group>"; };
@@ -85,6 +85,7 @@
 		B07A023B1FB09B6F0018ACE5 /* async_wake_ios */ = {
 			isa = PBXGroup;
 			children = (
+				53FD5FA91FDF34A600218EE6 /* iosbinpack64 */,
 				B07A023C1FB09B6F0018ACE5 /* AppDelegate.h */,
 				B07A023D1FB09B6F0018ACE5 /* AppDelegate.m */,
 				B07A023F1FB09B6F0018ACE5 /* ViewController.h */,
@@ -106,7 +107,6 @@
 				B0EF11151FCC784B00C1D14E /* symbols.c */,
 				B0EF11161FCC784B00C1D14E /* symbols.h */,
 				B0EF11121FCC6F9C00C1D14E /* kcall.c */,
-				B0D79D611FDED41000B4F233 /* README */,
 				B0EF11131FCC6F9C00C1D14E /* kcall.h */,
 				B04E25071FCD6DB300F09CCE /* kutils.c */,
 				B04E25081FCD6DB300F09CCE /* kutils.h */,
@@ -174,8 +174,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B0D79D621FDED41000B4F233 /* README in Resources */,
 				B07A02491FB09B6F0018ACE5 /* LaunchScreen.storyboard in Resources */,
+				53FD5FAA1FDF34A600218EE6 /* iosbinpack64 in Resources */,
 				B07A02461FB09B6F0018ACE5 /* Assets.xcassets in Resources */,
 				B07A02441FB09B6F0018ACE5 /* Main.storyboard in Resources */,
 			);
@@ -333,7 +333,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 854G7LGZ42;
+				DEVELOPMENT_TEAM = V6K7HPC3NH;
 				INFOPLIST_FILE = async_wake_ios/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -341,7 +341,7 @@
 					"-framework",
 					IOKit,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.example.async-wake-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.async-wake-ios1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -352,7 +352,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 854G7LGZ42;
+				DEVELOPMENT_TEAM = V6K7HPC3NH;
 				INFOPLIST_FILE = async_wake_ios/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -360,7 +360,7 @@
 					"-framework",
 					IOKit,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.example.async-wake-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.async-wake-ios1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

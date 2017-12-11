@@ -760,7 +760,7 @@ void bind_shell() {
 mach_port_t go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
-    bind_shell();
+  //bind_shell();
   if (probably_have_correct_symbols()) {
     printf("have symbols for this device, testing the kernel debugger...\n");
     test_kdbg();
