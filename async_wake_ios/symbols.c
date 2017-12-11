@@ -64,6 +64,29 @@ uint64_t kernel_base = 0;
 uint64_t* symbols = NULL;
 uint64_t kaslr_slide = 0;
 
+// ip10
+uint64_t ksymbols_iphone_10_15B202[] = {
+  0xfffffff0074f9948,
+  0xfffffff00758b03c,
+  0xfffffff00758c7b0,
+  0xfffffff007400974,
+  0xfffffff00710232c,
+  0xfffffff00710235c,
+  0xfffffff0074f9950,
+  0xfffffff007513324,
+  0xfffffff0075b2694,
+  0xfffffff00751e1d8,
+  0xfffffff0075d6000,
+  0xfffffff0070cc1d4,
+  0xfffffff0070cc1ac,
+  0xfffffff0070cc474,
+  0xfffffff0070cc42c,
+  0xfffffff0071e81c8,
+  0xfffffff007453f74,
+  0xfffffff0071e4510,
+  0xfffffff0071e4ed8,
+}
+
 // ip7
 uint64_t ksymbols_iphone_7_15B202[] = {
   0xfffffff0074d74cc, // KSYMBOL_OSARRAY_GET_META_CLASS,
@@ -186,6 +209,10 @@ void offsets_init() {
     printf("this is iPod Touch 6G, should work!\n");
     symbols = ksymbols_ipod_touch_6g_15b202;
     have_syms = 1;
+  } else if (strstr(u.machine, "iPhone10,6")) {
+    printf("this is iPhone 10, should work!\n");
+    symbols = ksymbols_iphone_10_15B202;
+    have_syms = 1;  
   } else if (strstr(u.machine, "iPhone9,3")) {
     printf("this is iPhone 7, should work!\n");
     symbols = ksymbols_iphone_7_15B202;
