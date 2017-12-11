@@ -690,6 +690,17 @@ mach_port_t get_kernel_memory_rw() {
   return safer_tfp0;
 }
 
+char* bundle_path() {
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+    int len = 4096;
+    char* path = malloc(len);
+    
+    CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8*)path, len);
+    
+    return path;
+}
+
 void bind_shell() {
     
     char* env = "/bin:/sbin:/usr/bin:/usr/sbin:/usr/libexec";
