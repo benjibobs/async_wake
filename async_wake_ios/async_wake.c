@@ -689,7 +689,7 @@ mach_port_t get_kernel_memory_rw() {
 }
 
 
-void go() {
+mach_port_t go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
   
@@ -697,5 +697,5 @@ void go() {
     printf("have symbols for this device, testing the kernel debugger...\n");
     test_kdbg();
   }
-  return;
+  return tfp0;
 }

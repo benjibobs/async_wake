@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-void go(void);
+mach_port_t go(void);
 
 #endif /* async_wake_h */
