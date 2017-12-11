@@ -85,7 +85,7 @@ uint64_t ksymbols_iphone_10_15B202[] = {
   0xfffffff007453f74,
   0xfffffff0071e4510,
   0xfffffff0071e4ed8,
-}
+};
 
 // ip7
 uint64_t ksymbols_iphone_7_15B202[] = {
