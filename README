@@ -3,7 +3,7 @@ async_wake - iOS 11.1.2 kernel exploit and PoC local kernel debugger by @i41nbee
 Supported Devices:
  tfp0: all 64-bit devices running 11.1.2
 
- tfp0 + local kernel debugger: the devices I have on my desk running 11.1.2 (iPhone 7, iPhone 6s, iPod Touch 6G)
+ tfp0 + local kernel debugger: iPhone 10, iPhone7, iPhone 6S, iPod Touch 6G
                                theoretically it will also work for all other devices, you just need to find the symbols
 
 PoC local kernel debugger:
