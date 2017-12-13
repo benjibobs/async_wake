@@ -861,7 +861,7 @@ uint64_t get_our_proc() {
     return -1; // we failed :/
 }
 
-kern_return_t get_root () {
+kern_return_t get_root (uint64_t kernel_task) {
     
     kern_return_t ret = KERN_SUCCESS;
     
@@ -873,7 +873,6 @@ kern_return_t get_root () {
         return ret;
     }
     
-    extern uint64_t kernel_task;
     printf("[INFO]: kernel_task: %llx\n", kernel_task); // BSD_INFO
     
     uint64_t kern_ucred = rk64(kernel_task + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
