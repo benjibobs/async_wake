@@ -929,6 +929,8 @@ mach_port_t go() {
     
     if(strstr(u.machine, "iPhone8,4")){
         OFFSET_KERNEL_TASK = 0xfffffff00760a048;
+    } else if(strstr(u.machine, "iPhone10,5")) {
+        OFFSET_KERNEL_TASK = 0xfffffff00767a048;
     }
     
     if(OFFSET_KERNEL_TASK != 0){
