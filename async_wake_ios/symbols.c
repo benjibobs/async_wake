@@ -131,6 +131,31 @@ uint64_t ksymbols_ipod_touch_6g_15b202[] = {
     0xFFFFFFF0071A9ABC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
 };
 
+// 6p (N56ap)
+uint64_t ksymbol_iphone_6p_15b202[] = {
+	0xfffffff0074a4a4c,    // __ZNK7OSArray12getMetaClassEv
+	0xfffffff007533cf8, // __ZNK12IOUserClient12getMetaClassEv
+	0xfffffff0075354a0, // __ZN12IOUserClient24getTargetAndTrapForIndexEPP9IOServicej
+	0xfffffff0073b71e4, // _csblob_get_cdhash
+	0xfffffff0070c8710, // _kalloc_external
+	0xfffffff0070c8740, // _kfree
+	0xFFFFFFF0070C873C, // ret
+	0xfffffff0074be978, // __ZNK12OSSerializer9serializeEP11OSSerialize
+	0xfffffff007559fd0, // kprintf
+	0xfffffff0074c9910, // _uuid_copy
+	0xfffffff00757E000, // _DATA:__data + 0x6000
+	// 0x4DDE74 + 
+	0xFFFFFFF00709818C, // KSYMBOL_VALID_LINK_REGISTER      // look for reference to  FAR_EL1 (Fault Address Register (EL1))
+  	0xFFFFFFF007098180, // KSYMBOL_X21_JOP_GADGET           // look for references to FPCR (Floating-point Control Register)
+  	0xFFFFFFF007098434, // KSYMBOL_EXCEPTION_RETURN         // look for references to Set PSTATE.DAIF [--IF]
+  	0xFFFFFFF0070983E4, // KSYMBOL_THREAD_EXCEPTION_RETURN  // a bit before exception_return
+  	0xFFFFFFF0071ACCB8, // KSYMBOL_SET_MDSCR_EL1_GADGET     // look for references to MDSCR_EL1
+  	0xFFFFFFF0074062F0, // KSYMBOL_WRITE_SYSCALL_ENTRYPOINT // look for references to enosys to find the syscall table (this is actually 1 instruction in to the entrypoint)
+  	0xFFFFFFF0071A90C0, // KSYMBOL_EL1_HW_BP_INFINITE_LOOP  // look for xrefs to "ESR (0x%x) for instruction trapped" and find switch case 49
+  	0xFFFFFFF0071A9ABC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
+
+};
+
 uint64_t ksymbols_iphone_6s_15b202[] = {
     0xFFFFFFF00748D548, // KSYMBOL_OSARRAY_GET_META_CLASS,
     0xFFFFFFF00751C4D0, // KSYMBOL_IOUSERCLIENT_GET_META_CLASS
@@ -224,6 +249,10 @@ void offsets_init() {
         printf("this is iPhone 6s, should work!\n");
         symbols = ksymbols_iphone_6s_15b202;
         have_syms = 1;
+    } else if (strstr(u.machine, "iPhone7,1")) {
+   	    printf("this is iPhone 6P, should work!\n");
+   	    symbols = ksymbol_iphone_6p_15b202;
+   	    have_syms = 1;
     } else {
         printf("no symbols for this device yet\n");
         printf("tfp0 should still work, but the kernel debugger PoC won't\n");
