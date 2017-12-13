@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		53F39D541FE1F28C00CD8539 /* com.apple.iokit.IOMobileGraphicsFamily.plist in Resources */ = {isa = PBXBuildFile; fileRef = 53F39D531FE1F28B00CD8539 /* com.apple.iokit.IOMobileGraphicsFamily.plist */; };
 		53FD5FAA1FDF34A600218EE6 /* iosbinpack64 in Resources */ = {isa = PBXBuildFile; fileRef = 53FD5FA91FDF34A600218EE6 /* iosbinpack64 */; };
 		B003EB351FC583CB00C58441 /* kmem.c in Sources */ = {isa = PBXBuildFile; fileRef = B003EB331FC583CA00C58441 /* kmem.c */; };
 		B003EB381FC5863800C58441 /* find_port.c in Sources */ = {isa = PBXBuildFile; fileRef = B003EB361FC5863800C58441 /* find_port.c */; };
@@ -25,6 +26,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		53F39D531FE1F28B00CD8539 /* com.apple.iokit.IOMobileGraphicsFamily.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.iokit.IOMobileGraphicsFamily.plist; sourceTree = "<group>"; };
 		53FD5FA91FDF34A600218EE6 /* iosbinpack64 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = iosbinpack64; sourceTree = "<group>"; };
 		B003EB331FC583CA00C58441 /* kmem.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = kmem.c; sourceTree = "<group>"; };
 		B003EB341FC583CA00C58441 /* kmem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmem.h; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 		B07A023B1FB09B6F0018ACE5 /* async_wake_ios */ = {
 			isa = PBXGroup;
 			children = (
+				53F39D531FE1F28B00CD8539 /* com.apple.iokit.IOMobileGraphicsFamily.plist */,
 				53FD5FA91FDF34A600218EE6 /* iosbinpack64 */,
 				B07A023C1FB09B6F0018ACE5 /* AppDelegate.h */,
 				B07A023D1FB09B6F0018ACE5 /* AppDelegate.m */,
@@ -178,6 +181,7 @@
 				53FD5FAA1FDF34A600218EE6 /* iosbinpack64 in Resources */,
 				B07A02461FB09B6F0018ACE5 /* Assets.xcassets in Resources */,
 				B07A02441FB09B6F0018ACE5 /* Main.storyboard in Resources */,
+				53F39D541FE1F28C00CD8539 /* com.apple.iokit.IOMobileGraphicsFamily.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

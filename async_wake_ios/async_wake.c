@@ -937,6 +937,40 @@ mach_port_t go() {
         kt = rk64(find_kernel_base() + (OFFSET_KERNEL_TASK-0xFFFFFFF007004000));
         uid_t old = get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
         // do root stuff
+        
+        /*
+         To change your resolution:
+         - Edit values in the .plist
+         - Change the boolean below to true
+         - Reboot
+         
+         You only have to do this once. BE CAREFUL, IT IS NOT MY FAULT IF YOU FUCK THIS UP
+         */
+        bool shouldChangeResolution = false;
+        
+        if(shouldChangeResolution){
+            
+            char ch;
+            FILE *source, *target;
+            
+            char* path;
+            
+            asprintf(&path, "%s/com.apple.iokit.IOMobileGraphicsFamily.plist", bundle_path());
+            
+            source = fopen(path, "r");
+            
+            target = fopen("/var/mobile/Library/Preferences/com.apple.iokit.IOMobileGraphicsFamily.plist", "w");
+            
+            while( ( ch = fgetc(source) ) != EOF )
+                fputc(ch, target);
+            
+            printf("Resolution changed, please reboot.\n");
+            
+            fclose(source);
+            fclose(target);
+            
+        }
+        
         setuid(old);
         //printf("will launch a shell with this environment: %s\n", env_path); // char* env_path = prepare_payload();
         //bind_shell(env_path, 4141);
