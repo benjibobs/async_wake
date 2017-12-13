@@ -7,13 +7,13 @@ Supported Devices:
                                theoretically it will also work for all other devices, you just need to find the symbols
  root: iPhone 8,4
 
-We can now temporarily gain root! I think we have to swap back to the old uid to prevent kernel panics though.
+We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
      
 Here's how to do this on your phone:
 - Find your OFFSET_KERNEL_TASK using this guide from uroboro: https://gist.github.com/uroboro/5b2b2b2aa1793132c4e91826ce844957
 - Add your device to the u.machine comparisons (add an 'else if' with your device) and set the offset
 - Check console to ensure the test file is written!
-- GG root.
+- GG uid=0.
 
 PoC local kernel debugger:
 You can pause the execution of a syscall at arbitrary points and modify kernel state (registers and memory) then continue it.
