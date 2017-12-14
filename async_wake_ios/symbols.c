@@ -178,6 +178,28 @@ uint64_t ksymbols_iphone_6s_15b202[] = {
     0xFFFFFFF007194BBC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
 };
 
+uint64_t ksymbols_ipad_mini_2_wifi_15b202[] = {
+    0xFFFFFFF0074947EC, // KSYMBOL_OSARRAY_GET_META_CLASS,
+    0xFFFFFFF007523A98, // KSYMBOL_IOUSERCLIENT_GET_META_CLASS
+    0xFFFFFFF007525240, // KSYMBOL_IOUSERCLIENT_GET_TARGET_AND_TRAP_FOR_INDEX
+    0xFFFFFFF0073A6F84, // KSYMBOL_CSBLOB_GET_CD_HASH
+    0xFFFFFFF0070B8590, // KSYMBOL_KALLOC_EXTERNAL
+    0xFFFFFFF0070B85C0, // KSYMBOL_KFREE
+    0xFFFFFFF0070B85BC, // KYSMBOL_RET
+    0xFFFFFFF0074AE718, // KSYMBOL_OSSERIALIZER_SERIALIZE,
+    0xFFFFFFF007549D40, // KSYMBOL_KPRINTF
+    0xFFFFFFF0074B96B0, // KSYMBOL_UUID_COPY
+    0xFFFFFFF00756E000, // KSYMBOL_CPU_DATA_ENTRIES         // 0x6000 in to the data segment
+    0xFFFFFFF00708818C, // KSYMBOL_VALID_LINK_REGISTER      // look for reference to  FAR_EL1 (Fault Address Register (EL1))
+    0xFFFFFFF007088164, // KSYMBOL_X21_JOP_GADGET           // look for references to FPCR (Floating-point Control Register)
+    0xFFFFFFF007088434, // KSYMBOL_EXCEPTION_RETURN         // look for references to Set PSTATE.DAIF [--IF]
+    0xFFFFFFF0070883E4, // KSYMBOL_THREAD_EXCEPTION_RETURN  // a bit before exception_return
+    0xFFFFFFF00719CF44, // KSYMBOL_SET_MDSCR_EL1_GADGET     // look for references to MDSCR_EL1
+    0xFFFFFFF0073F6094, // KSYMBOL_WRITE_SYSCALL_ENTRYPOINT // look for references to enosys to find the syscall table (this is actually 1 instruction in to the entrypoint)
+    0xFFFFFFF007198EC0, // KSYMBOL_EL1_HW_BP_INFINITE_LOOP  // look for xrefs to "ESR (0x%x) for instruction trapped" and find switch case 49
+    0xfffffff0071998BC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
+};
+
 uint64_t ksym(enum ksymbol sym) {
     if (kernel_base == 0) {
         if (!have_kmem_read()) {
@@ -253,6 +275,10 @@ void offsets_init() {
    	    printf("this is iPhone 6P, should work!\n");
    	    symbols = ksymbol_iphone_6p_15b202;
    	    have_syms = 1;
+    } else if (strstr(u.machine, "iPad4,4")) {
+        printf("this is iPad Mini 2 WiFi, should work!\n");
+        symbols = ksymbols_ipad_mini_2_wifi_15b202;
+        have_syms = 1;
     } else {
         printf("no symbols for this device yet\n");
         printf("tfp0 should still work, but the kernel debugger PoC won't\n");
