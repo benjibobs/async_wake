@@ -931,6 +931,8 @@ mach_port_t go() {
         OFFSET_KERNEL_TASK = 0xfffffff00760a048;
     } else if(strstr(u.machine, "iPhone10,5")) {
         OFFSET_KERNEL_TASK = 0xfffffff00767a048;
+    } else if(strstr(u.machine, "iPhone10,4")) {
+        OFFSET_KERNEL_TASK = 0xfffffff00767a048;
     }
     
     if(OFFSET_KERNEL_TASK != 0){
@@ -972,9 +974,6 @@ mach_port_t go() {
         }
         
         setuid(old);
-        //printf("will launch a shell with this environment: %s\n", env_path); // char* env_path = prepare_payload();
-        //bind_shell(env_path, 4141);
-        //free(env_path);
     }
     
     
