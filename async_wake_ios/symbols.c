@@ -279,6 +279,10 @@ void offsets_init() {
         printf("this is iPad Mini 2 WiFi, should work!\n");
         symbols = ksymbols_ipad_mini_2_wifi_15b202;
         have_syms = 1;
+    } else if (strstr(u.machine, "iPhone6,2")) {
+        printf("this is iPhone 5s, should work!\n");
+        symbols = ksymbols_ipad_mini_2_wifi_15b202;
+        have_syms = 1;
     } else {
         printf("no symbols for this device yet\n");
         printf("tfp0 should still work, but the kernel debugger PoC won't\n");
