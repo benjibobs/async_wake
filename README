@@ -6,7 +6,7 @@ Supported Devices:
  tfp0 + local kernel debugger: iPhone 10, iPhone 7, iPhone 7 plus, iPhone 6S, iPhone 6 plus, iPod Touch 6G
                                theoretically it will also work for all other devices, you just need to find the symbols
  
- root: iPhoneSE (8,4), iPhone 8 Plus (10,5)
+ root: iPhoneSE (8,4), iPhone 8 Plus (10,5), iPhone 8 GSM (10,4)
 
 We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
      
