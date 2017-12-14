@@ -6,15 +6,9 @@ Supported Devices:
  tfp0 + local kernel debugger: iPhone 10, iPhone 7, iPhone 7 plus, iPhone 6S, iPhone 6 plus, iPod Touch 6G
                                theoretically it will also work for all other devices, you just need to find the symbols
  
- root: iPhoneSE (8,4), iPhone 8 Plus (10,5), iPhone 8 GSM (10,4)
+ root: all 64-bit devices running 11.1.2
 
 We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
-     
-Here's how to do this on your phone:
-- Find your OFFSET_KERNEL_TASK using this guide from uroboro: https://gist.github.com/uroboro/5b2b2b2aa1793132c4e91826ce844957
-- Add your device to the u.machine comparisons (add an 'else if' with your device) and set the offset
-- Check console to ensure the test file is written!
-- GG uid=0.
 
 Usage:
      - call get_root() and store the uid it returns.
