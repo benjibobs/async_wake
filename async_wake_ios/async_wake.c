@@ -854,7 +854,7 @@ uint64_t proc_for_pid(uint32_t pid) {
     exit(EXIT_FAILURE);
 }
 
-mach_port_t go() {
+void go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
     
@@ -891,8 +891,6 @@ mach_port_t go() {
     printf("[INFO]: new uid: %d\n", getuid());
     // do root stuff below
     
-    
-    
     /*
      To change your resolution:
      - Edit values in the .plist
@@ -907,23 +905,17 @@ mach_port_t go() {
         
         char ch;
         FILE *source, *target;
-        
         char* path;
-        
         asprintf(&path, "%s/com.apple.iokit.IOMobileGraphicsFamily.plist", bundle_path());
-        
         source = fopen(path, "r");
-        
         target = fopen("/var/mobile/Library/Preferences/com.apple.iokit.IOMobileGraphicsFamily.plist", "w");
         
         while( ( ch = fgetc(source) ) != EOF )
             fputc(ch, target);
         
         printf("Resolution changed, please reboot.\n");
-        
         fclose(source);
         fclose(target);
-        
     }
 
     //set uid back
@@ -934,6 +926,4 @@ mach_port_t go() {
         printf("have symbols for this device, testing the kernel debugger...\n");
         test_kdbg();
     }
-    
-    return tfp0;
 }
