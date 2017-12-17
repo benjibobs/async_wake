@@ -178,6 +178,28 @@ uint64_t ksymbols_iphone_6s_15b202[] = {
     0xFFFFFFF007194BBC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
 };
 
+uint64_t ksymbols_iphone_6_15b202[] = {
+    0xFFFFFFF0074A4A4C, // KSYMBOL_OSARRAY_GET_META_CLASS,
+    0xFFFFFFF007533CF8, // KSYMBOL_IOUSERCLIENT_GET_META_CLASS
+    0xFFFFFFF0075354A0, // KSYMBOL_IOUSERCLIENT_GET_TARGET_AND_TRAP_FOR_INDEX
+    0xFFFFFFF0073B71E4, // KSYMBOL_CSBLOB_GET_CD_HASH
+    0xFFFFFFF0070C8710, // KSYMBOL_KALLOC_EXTERNAL
+    0xFFFFFFF0070C8740, // KSYMBOL_KFREE
+    0xFFFFFFF0070C873C, // KYSMBOL_RET
+    0xFFFFFFF0074BE978, // KSYMBOL_OSSERIALIZER_SERIALIZE,
+    0xFFFFFFF007559FD0, // KSYMBOL_KPRINTF
+    0xFFFFFFF0074C9910, // KSYMBOL_UUID_COPY
+    0xFFFFFFF00757E000, // KSYMBOL_CPU_DATA_ENTRIES         // 0x6000 in to the data segment
+    0xFFFFFFF00709818C, // KSYMBOL_VALID_LINK_REGISTER      // look for reference to  FAR_EL1 (Fault Address Register (EL1))
+    0xFFFFFFF007098164, // KSYMBOL_X21_JOP_GADGET           // look for references to FPCR (Floating-point Control Register)
+    0xFFFFFFF007098434, // KSYMBOL_EXCEPTION_RETURN         // look for references to Set PSTATE.DAIF [--IF]
+    0xFFFFFFF0070983E4, // KSYMBOL_THREAD_EXCEPTION_RETURN  // a bit before exception_return
+    0xFFFFFFF0071AD144, // KSYMBOL_SET_MDSCR_EL1_GADGET     // look for references to MDSCR_EL1
+    0xFFFFFFF0074062F4, // KSYMBOL_WRITE_SYSCALL_ENTRYPOINT // look for references to enosys to find the syscall table (this is actually 1 instruction in to the entrypoint)
+    0xFFFFFFF0071A90C0, // KSYMBOL_EL1_HW_BP_INFINITE_LOOP  // look for xrefs to "ESR (0x%x) for instruction trapped" and find switch case 49
+    0xFFFFFFF0071A9ABC, // KSYMBOL_SLEH_SYNC_EPILOG         // look for xrefs to "Unsupported Class %u event code."
+};
+
 uint64_t ksymbols_ipad_mini_2_wifi_15b202[] = {
     0xFFFFFFF0074947EC, // KSYMBOL_OSARRAY_GET_META_CLASS,
     0xFFFFFFF007523A98, // KSYMBOL_IOUSERCLIENT_GET_META_CLASS
@@ -275,6 +297,10 @@ void offsets_init() {
    	    printf("this is iPhone 6P, should work!\n");
    	    symbols = ksymbol_iphone_6p_15b202;
    	    have_syms = 1;
+    } else if (strstr(u.machine, "iPhone7,2")) {
+        printf("this is iPhone 6, should work!\n");
+        symbols = ksymbols_iphone_6_15b202;
+        have_syms = 1;
     } else if (strstr(u.machine, "iPad4,4")) {
         printf("this is iPad Mini 2 WiFi, should work!\n");
         symbols = ksymbols_ipad_mini_2_wifi_15b202;
