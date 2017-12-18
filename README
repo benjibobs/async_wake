@@ -11,9 +11,9 @@ Supported Devices:
 We can now temporarily gain uid=0! I think we have to swap back to the old uid to prevent kernel panics though.
 
 Usage:
-     - call get_root() and store the uid it returns.
+     - call get_root() and store the cred (orig_cred) it returns.
      - do root stuff
-     - setuid(old_uid)
+     - unroot(orig_cred)
 
 PoC local kernel debugger:
 You can pause the execution of a syscall at arbitrary points and modify kernel state (registers and memory) then continue it.
